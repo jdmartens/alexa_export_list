@@ -6,14 +6,17 @@ from ask_sdk_core.dispatch_components import AbstractRequestHandler
 from ask_sdk_core.handler_input import HandlerInput
 from ask_sdk_model import Response
 
-class ExportListIntentHandler(AbstractRequestHandler):
+class ExportListHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        return handler_input.request_envelope.request.type == "IntentRequest" and \
-               handler_input.request_envelope.request.intent.name == "ExportListIntent"
+        return handler_input.request_envelope.request.type == "Task"
 
     def handle(self, handler_input):
-        # Get the list name from the user's input
-        list_name = handler_input.request_envelope.request.intent.slots["list_name"].value
+        # Get the list name from the task input
+        task = handler_input.request_envelope.request
+        if task.name != "get_list":
+            return handler_input.response_builder.speak("Invalid task").set_should_end_session(True).response
+        
+        list_name = task.input['list_name']
 
         # Fetch the specified Alexa list
         list_client = handler_input.service_client_factory.get_list_management_service()
@@ -21,8 +24,7 @@ class ExportListIntentHandler(AbstractRequestHandler):
         user_list = next((l for l in lists.lists if l.name.lower() == list_name.lower()), None)
         
         if not user_list:
-            speech_text = f"I couldn't find a list named {list_name}. Please try again with a valid list name."
-            return handler_input.response_builder.speak(speech_text).response
+            return handler_input.response_builder.speak(f"List {list_name} not found").set_should_end_session(True).response
 
         # Fetch list items
         list_items = list_client.get_list_items(user_list.list_id)
@@ -44,15 +46,13 @@ class ExportListIntentHandler(AbstractRequestHandler):
             }
         )
         
-        speech_text = f"Your {list_name} list has been exported and sent via email."
-        return handler_input.response_builder.speak(speech_text).response
+        return handler_input.response_builder.speak(f"Your {list_name} list has been exported and sent via email").set_should_end_session(True).response
 
 def create_email_with_attachment(csv_data, filename):
-    pass
     # Implement email creation with attachment here
     # Return the raw email message
+    pass
 
 sb = SkillBuilder()
-sb.add_request_handler(ExportListIntentHandler())
+sb.add_request_handler(ExportListHandler())
 lambda_handler = sb.lambda_handler()
-
