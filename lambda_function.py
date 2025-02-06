@@ -48,6 +48,7 @@ class ExportListIntentHandler(AbstractRequestHandler):
         return handler_input.response_builder.speak(speech_text).response
 
 def create_email_with_attachment(csv_data, filename):
+    pass
     # Implement email creation with attachment here
     # Return the raw email message
 
